@@ -84,6 +84,24 @@
             box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25) !important;
         }
 
+        /* Dropdown custom CSS for vanilla JS support */
+        #tags-dropdown-list {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 1000;
+            width: 260px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--panel-border);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        #tags-dropdown-list.show {
+            display: block;
+        }
+
         /* Table Aesthetics */
         .custom-table {
             margin-bottom: 0;
@@ -99,6 +117,22 @@
             letter-spacing: 0.08em;
             padding: 1.1rem 1.25rem;
             border-bottom: 1px solid var(--panel-border);
+        }
+        .custom-table thead th.sortable {
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .custom-table thead th.sortable:hover {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+            color: var(--text-main) !important;
+        }
+        .custom-table thead th.sorted {
+            color: var(--accent-blue) !important;
+        }
+        .sort-arrow {
+            font-size: 0.75rem;
+            margin-left: 4px;
         }
         .custom-table tbody tr {
             border-bottom: 1px solid rgba(255, 255, 255, 0.03);
@@ -227,6 +261,7 @@
         </div>
     </nav>
 
+    <!-- Fixed container-fluid typo here -->
     <div class="container-fluid px-4">
 
         <div class="row g-4 mb-4" id="stats-panel">
@@ -267,6 +302,24 @@
                     <option value="stopped">🔴 Stopped</option>
                 </select>
             </div>
+            <!-- Excel-like Dropdown Tag Filter -->
+            <div class="col-12 col-md-3 col-lg-2">
+                <div class="dropdown" style="position: relative;">
+                    <button class="btn btn-outline-secondary dropdown-toggle w-100 search-control text-start d-flex justify-content-between align-items-center" type="button" id="tags-dropdown-btn" aria-expanded="false" style="border: 1px solid var(--panel-border) !important; background: rgba(15, 23, 42, 0.6) !important; color: var(--text-main) !important;">
+                        <span>🏷️ Filter Tags</span>
+                    </button>
+                    <div class="dropdown-menu p-3 glass-panel" id="tags-dropdown-list">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="tag-select-all" checked onchange="toggleAllTags(this)">
+                            <label class="form-check-label fw-bold text-info" for="tag-select-all" style="cursor: pointer;">Select All</label>
+                        </div>
+                        <hr class="border-secondary mb-2 mt-1">
+                        <div id="dynamic-tags-container">
+                            <!-- Dynamic tag checkboxes go here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="position-relative">
@@ -281,13 +334,13 @@
                 <table class="table custom-table">
                     <thead>
                         <tr>
-                            <th style="width: 90px;">VM ID</th>
-                            <th>Name</th>
-                            <th>Status</th>
-                            <th>Node</th>
+                            <th class="sortable" onclick="sortTable(0, 'int')">VM ID<span class="sort-arrow" style="opacity: 0.3;"> ↕</span></th>
+                            <th class="sortable" onclick="sortTable(1, 'text')">Name<span class="sort-arrow" style="opacity: 0.3;"> ↕</span></th>
+                            <th class="sortable" onclick="sortTable(2, 'text')">Status<span class="sort-arrow" style="opacity: 0.3;"> ↕</span></th>
+                            <th class="sortable" onclick="sortTable(3, 'text')">Node<span class="sort-arrow" style="opacity: 0.3;"> ↕</span></th>
                             <th>IP Address</th>
-                            <th>CPU</th>
-                            <th>Memory</th>
+                            <th class="sortable" onclick="sortTable(5, 'float')">CPU<span class="sort-arrow" style="opacity: 0.3;"> ↕</span></th>
+                            <th class="sortable" onclick="sortTable(6, 'float')">Memory<span class="sort-arrow" style="opacity: 0.3;"> ↕</span></th>
                             <th>Tags</th>
                         </tr>
                     </thead>
@@ -303,6 +356,11 @@
     <script src="{{ url_for('static', path='js/htmx.min.js') }}"></script>
 
     <script>
+        // Sort State
+        let currentSortColumn = -1;
+        let currentSortAscending = true;
+
+        // Clipboard copy functionality
         function copyToClipboard(text, btn) {
             navigator.clipboard.writeText(text).then(() => {
                 const originalHTML = btn.innerHTML;
@@ -311,25 +369,222 @@
             }).catch(err => { console.error('Copy failed: ', err); });
         }
 
+        // Vanilla Dropdown Toggle
+        const dropdownBtn = document.getElementById('tags-dropdown-btn');
+        const dropdownList = document.getElementById('tags-dropdown-list');
+
+        if (dropdownBtn && dropdownList) {
+            dropdownBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdownList.classList.toggle('show');
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!dropdownList.contains(e.target) && e.target !== dropdownBtn) {
+                    dropdownList.classList.remove('show');
+                }
+            });
+        }
+
+        // Tag Checklist Builder
+        function updateTagDropdown() {
+            const container = document.getElementById('dynamic-tags-container');
+            if (!container) return;
+
+            const rows = document.querySelectorAll('#vm-table-body tr');
+            const allTags = new Set();
+
+            rows.forEach(row => {
+                const tagsStr = row.getAttribute('data-tags') || '';
+                if (tagsStr) {
+                    const tags = tagsStr.replace(/;/g, ',').split(',').map(t => t.trim()).filter(t => t);
+                    tags.forEach(t => allTags.add(t));
+                }
+            });
+
+            // Save previous checkbox selections to maintain states
+            const previouslyChecked = new Set();
+            const checkboxes = container.querySelectorAll('.tag-checkbox');
+            checkboxes.forEach(cb => {
+                if (cb.checked) {
+                    previouslyChecked.add(cb.value);
+                }
+            });
+
+            const hasPreviousSelection = checkboxes.length > 0;
+            container.innerHTML = '';
+
+            if (allTags.size === 0) {
+                container.innerHTML = '<div class="text-muted small italic">No tags found</div>';
+                return;
+            }
+
+            const sortedTags = Array.from(allTags).sort();
+            sortedTags.forEach(tag => {
+                const div = document.createElement('div');
+                div.className = 'form-check mb-1';
+                const isChecked = (!hasPreviousSelection) || previouslyChecked.has(tag);
+                div.innerHTML = `
+                    <input class="form-check-input tag-checkbox" type="checkbox" value="${tag}" id="tag-cb-${tag}" ${isChecked ? 'checked' : ''} onchange="onTagCheckboxChange()">
+                    <label class="form-check-label text-light small" for="tag-cb-${tag}" style="cursor: pointer;">${tag}</label>
+                `;
+                container.appendChild(div);
+            });
+
+            updateSelectAllState();
+        }
+
+        function onTagCheckboxChange() {
+            updateSelectAllState();
+            filterTable();
+        }
+
+        function updateSelectAllState() {
+            const selectAllCb = document.getElementById('tag-select-all');
+            if (!selectAllCb) return;
+
+            const checkboxes = document.querySelectorAll('.tag-checkbox');
+            if (checkboxes.length === 0) {
+                selectAllCb.checked = true;
+                return;
+            }
+
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            const noneChecked = Array.from(checkboxes).every(cb => !cb.checked);
+            
+            selectAllCb.checked = allChecked;
+            selectAllCb.indeterminate = !allChecked && !noneChecked;
+        }
+
+        function toggleAllTags(source) {
+            const checkboxes = document.querySelectorAll('.tag-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = source.checked;
+            });
+            filterTable();
+        }
+
+        // Global Table Row Filtering
         function filterTable() {
             const query = document.getElementById('search-input').value.toLowerCase().trim();
             const statusFilter = document.getElementById('status-filter').value;
             const rows = document.querySelectorAll('#vm-table-body tr');
             
+            // Get checklist states
+            const checkedTags = new Set();
+            const tagCheckboxes = document.querySelectorAll('.tag-checkbox');
+            tagCheckboxes.forEach(cb => {
+                if (cb.checked) checkedTags.add(cb.value);
+            });
+
+            const selectAllCb = document.getElementById('tag-select-all');
+
             rows.forEach(row => {
                 const id = row.getAttribute('data-vmid') || '';
                 const name = (row.getAttribute('data-name') || '').toLowerCase();
-                const tags = (row.getAttribute('data-tags') || '').toLowerCase();
+                const tagsStr = (row.getAttribute('data-tags') || '').toLowerCase();
                 const ip = (row.getAttribute('data-ip') || '').toLowerCase();
                 const status = row.getAttribute('data-status');
                 
-                const matchesQuery = id.includes(query) || name.includes(query) || tags.includes(query) || ip.includes(query);
+                const rowTags = tagsStr.replace(/;/g, ',').split(',').map(t => t.trim()).filter(t => t);
+
+                const matchesQuery = id.includes(query) || name.includes(query) || tagsStr.includes(query) || ip.includes(query);
                 const matchesStatus = statusFilter === 'all' || status === statusFilter;
                 
-                row.style.display = (matchesQuery && matchesStatus) ? '' : 'none';
+                // Excel-like Tag Match Logic
+                let matchesTags = false;
+                if (tagCheckboxes.length === 0) {
+                    matchesTags = true;
+                } else {
+                    if (rowTags.length === 0) {
+                        matchesTags = selectAllCb && selectAllCb.checked;
+                    } else {
+                        matchesTags = rowTags.some(tag => checkedTags.has(tag));
+                    }
+                }
+
+                row.style.display = (matchesQuery && matchesStatus && matchesTags) ? '' : 'none';
             });
         }
 
+        // Column Sorting Logic
+        function sortTable(columnIndex, type) {
+            const table = document.querySelector('.custom-table');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            if (currentSortColumn === columnIndex) {
+                currentSortAscending = !currentSortAscending;
+            } else {
+                currentSortColumn = columnIndex;
+                currentSortAscending = true;
+            }
+            
+            // Render arrow directions on headers
+            const headers = table.querySelectorAll('thead th');
+            headers.forEach((th, idx) => {
+                const arrow = th.querySelector('.sort-arrow');
+                if (arrow) {
+                    if (idx === columnIndex) {
+                        arrow.textContent = currentSortAscending ? ' ▲' : ' ▼';
+                        arrow.style.opacity = '1';
+                        th.classList.add('sorted');
+                    } else {
+                        arrow.textContent = ' ↕';
+                        arrow.style.opacity = '0.3';
+                        th.classList.remove('sorted');
+                    }
+                }
+            });
+
+            // Perform sorting
+            rows.sort((a, b) => {
+                let valA = getCellValue(a, columnIndex, type);
+                let valB = getCellValue(b, columnIndex, type);
+
+                if (type === 'int' || type === 'float') {
+                    return currentSortAscending ? valA - valB : valB - valA;
+                } else {
+                    return currentSortAscending 
+                        ? valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' })
+                        : valB.localeCompare(valA, undefined, { numeric: true, sensitivity: 'base' });
+                }
+            });
+
+            // Re-render rows inside table body
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        function getCellValue(row, idx, type) {
+            const cell = row.children[idx];
+            if (!cell) return '';
+
+            if (type === 'int') {
+                const val = parseInt(cell.textContent.trim(), 10);
+                return isNaN(val) ? 0 : val;
+            }
+            
+            if (type === 'float') {
+                const text = cell.textContent.trim();
+                if (text === '-' || text === 'N/A') return -1;
+                const match = text.match(/([0-9.]+)\s*%/);
+                if (match) {
+                    const val = parseFloat(match[1]);
+                    return isNaN(val) ? -1 : val;
+                }
+                const val = parseFloat(text);
+                return isNaN(val) ? -1 : val;
+            }
+
+            return cell.textContent.trim().toLowerCase();
+        }
+
+        // Trigger tag builders on DOM content load
+        window.addEventListener('DOMContentLoaded', () => {
+            updateTagDropdown();
+        });
+
+        // Intercept normal browser reloads
         document.addEventListener('keydown', function(e) {
             if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
                 e.preventDefault();
@@ -338,9 +593,24 @@
             }
         });
 
+        // Keep UI configurations (sorting/filters) active after HTMX updates the data
         document.addEventListener('htmx:afterSwap', function(evt) {
             if (evt.detail.target.id === 'vm-table-body') {
-                filterTable();
+                updateTagDropdown();
+                
+                if (currentSortColumn !== -1) {
+                    const col = currentSortColumn;
+                    currentSortColumn = -1; // reset to let sortTable toggle it back
+                    currentSortAscending = !currentSortAscending; // correct direction toggle
+                    
+                    let type = 'text';
+                    if (col === 0) type = 'int';
+                    else if (col === 5 || col === 6) type = 'float';
+                    
+                    sortTable(col, type);
+                } else {
+                    filterTable();
+                }
             }
         });
     </script>
