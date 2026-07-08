@@ -75,7 +75,7 @@ async def fetch_vm_ip(client: httpx.AsyncClient, node: str, vmid: int) -> str:
     """
     url = f"{PVE_API_URL.rstrip('/')}/nodes/{node}/qemu/{vmid}/agent/network-get-interfaces"
     try:
-        response = await client.get(url, headers=HEADERS, timeout=2.5)
+        response = await client.get(url, headers=HEADERS, timeout=5.0)
         if response.status_code == 200:
             res_json = response.json()
             data = res_json.get("data", {})
@@ -155,25 +155,24 @@ async def fetch_proxmox_data(client: httpx.AsyncClient) -> Tuple[List[Dict[str, 
                 "tags": tags
             })
             
-    # Resolve IP addresses concurrently for all running VMs, limited to 40 at a time to prevent API overload
-    sem = asyncio.Semaphore(40)
-    
-    async def fetch_vm_ip_throttled(vm_item):
-        async with sem:
-            return await fetch_vm_ip(client, vm_item["node"], vm_item["vmid"])
-
     tasks = []
     running_vms = []
     for vm in vms:
         if vm["status"] == "running":
             running_vms.append(vm)
-            tasks.append(fetch_vm_ip_throttled(vm))
+            tasks.append(vm)
         else:
             vm["ip"] = "N/A"
             
     if tasks:
-        logger.info(f"Querying QEMU agent networks for {len(tasks)} running VMs (max 40 concurrent).")
-        ips = await asyncio.gather(*tasks)
+        logger.info(f"Querying QEMU agent networks for {len(tasks)} running VMs with bounded concurrency.")
+        sem = asyncio.Semaphore(30)
+        async def sem_fetch(node, vmid):
+            async with sem:
+                return await fetch_vm_ip(client, node, vmid)
+        
+        bounded_tasks = [sem_fetch(vm["node"], vm["vmid"]) for vm in running_vms]
+        ips = await asyncio.gather(*bounded_tasks)
         for vm, ip in zip(running_vms, ips):
             vm["ip"] = ip
             
