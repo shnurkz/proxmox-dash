@@ -16,7 +16,6 @@
             --accent-emerald: #10b981;
             --accent-rose: #f43f5e;
             --accent-amber: #fbbf24;
-            --glow: rgba(56, 189, 248, 0.15);
         }
 
         body {
@@ -25,9 +24,18 @@
                 radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.08) 0px, transparent 50%),
                 radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
             color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             min-height: 100vh;
-            padding-bottom: 3rem;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Full Width Main Layout Centering */
+        .main-wrapper {
+            width: 100%;
+            max-width: 100% !important;
+            padding: 0 2rem 3rem 2rem;
+            box-sizing: border-box;
         }
 
         /* Glassmorphism Panel Base */
@@ -39,9 +47,21 @@
             border-radius: 16px;
             padding: 1.5rem;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        /* Premium Stat Cards */
+        /* PURE CSS GRID FOR METRIC CARDS (Forces perfect horizontal row alignment) */
+        .cards-grid-layout {
+            display: grid !important;
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 1.5rem !important;
+            margin-bottom: 2rem !important;
+            width: 100%;
+        }
+        @media (max-width: 1200px) { .cards-grid-layout { grid-template-columns: repeat(2, 1fr) !important; } }
+        @media (max-width: 600px) { .cards-grid-layout { grid-template-columns: 1fr !important; } }
+
         .stat-card {
             position: relative;
             overflow: hidden;
@@ -68,45 +88,79 @@
             letter-spacing: 0.06em;
         }
 
-        /* Input & Filter Controls */
+        /* PURE FLEXBOX FOR FILTERS ROW (Forces inline horizontal layout) */
+        .filters-flex-layout {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            align-items: center !important;
+            gap: 1rem !important;
+            margin-bottom: 1.5rem !important;
+            width: 100%;
+        }
+        .filter-item-search { flex: 2 1 350px !important; max-width: 500px !important; }
+        .filter-item-select { flex: 1 1 200px !important; max-width: 250px !important; }
+
         .search-control {
             background: rgba(15, 23, 42, 0.6) !important;
             border: 1px solid var(--panel-border) !important;
             color: var(--text-main) !important;
             border-radius: 10px !important;
             padding: 0.65rem 1.2rem !important;
-        }
-        .search-control::placeholder {
-            color: #475569;
+            width: 100%;
         }
         .search-control:focus {
             border-color: var(--accent-blue) !important;
             box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25) !important;
         }
 
-        /* Dropdown custom CSS for vanilla JS support */
-        #tags-dropdown-list {
+        /* Custom Excel-like Tag Dropdown Container */
+        .excel-dropdown {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+        .excel-dropdown-menu {
             display: none;
             position: absolute;
             top: 100%;
             left: 0;
-            z-index: 1000;
-            width: 260px;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--panel-border);
-            max-height: 300px;
+            z-index: 1050;
+            min-width: 260px;
+            max-height: 320px;
             overflow-y: auto;
+            background: #0f172a;
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 0.75rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
-        #tags-dropdown-list.show {
-            display: block;
+        .excel-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.4rem 0.5rem;
+            border-radius: 6px;
+            color: #e2e8f0;
+            font-size: 0.85rem;
+            cursor: pointer;
         }
+        .excel-dropdown-item:hover { background: rgba(255,255,255,0.04); }
+        .excel-dropdown-item input[type="checkbox"] { cursor: pointer; }
 
-        /* Table Aesthetics */
+        /* Full Width Table Stretch */
+        .table-responsive-stretched {
+            width: 100% !important;
+            box-sizing: border-box;
+            border-radius: 14px;
+            overflow: hidden;
+        }
         .custom-table {
+            width: 100% !important;
             margin-bottom: 0;
             color: var(--text-main);
             vertical-align: middle;
+            border-collapse: collapse;
         }
         .custom-table thead th {
             background: rgba(15, 23, 42, 0.75);
@@ -117,37 +171,17 @@
             letter-spacing: 0.08em;
             padding: 1.1rem 1.25rem;
             border-bottom: 1px solid var(--panel-border);
-        }
-        .custom-table thead th.sortable {
             cursor: pointer;
             user-select: none;
-            transition: background-color 0.2s ease, color 0.2s ease;
         }
-        .custom-table thead th.sortable:hover {
-            background-color: rgba(255, 255, 255, 0.05) !important;
-            color: var(--text-main) !important;
-        }
-        .custom-table thead th.sorted {
-            color: var(--accent-blue) !important;
-        }
-        .sort-arrow {
-            font-size: 0.75rem;
-            margin-left: 4px;
-        }
+        .custom-table thead th:hover { color: var(--accent-blue); background: rgba(15,23,42,0.9); }
         .custom-table tbody tr {
             border-bottom: 1px solid rgba(255, 255, 255, 0.03);
             background: transparent !important;
-            transition: background-color 0.15s ease;
         }
-        .custom-table tbody tr:hover {
-            background-color: rgba(255, 255, 255, 0.02) !important;
-        }
-        .custom-table tbody td {
-            padding: 1rem 1.25rem;
-            color: #e2e8f0;
-        }
+        .custom-table tbody tr:hover { background-color: rgba(255, 255, 255, 0.02) !important; }
+        .custom-table tbody td { padding: 1rem 1.25rem; color: #e2e8f0; }
 
-        /* Utilities Progress Bars */
         .util-progress {
             background: rgba(0, 0, 0, 0.5);
             border-radius: 50px;
@@ -157,16 +191,11 @@
             border: 1px solid rgba(255, 255, 255, 0.02);
             margin-top: 4px;
         }
-        .util-progress-bar {
-            height: 100%;
-            border-radius: 50px;
-            transition: width 0.4s ease;
-        }
+        .util-progress-bar { height: 100%; border-radius: 50px; }
         .util-progress-bar.emerald { background: linear-gradient(90deg, #059669, var(--accent-emerald)); }
         .util-progress-bar.amber { background: linear-gradient(90deg, #d97706, var(--accent-amber)); }
         .util-progress-bar.rose { background: linear-gradient(90deg, #dc2626, var(--accent-rose)); }
 
-        /* Premium Futuristic Button */
         .btn-premium {
             background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -177,19 +206,8 @@
             box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
             transition: all 0.2s ease;
         }
-        .btn-premium:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45);
-            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-        }
+        .btn-premium:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45); background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); }
 
-        /* Badges */
-        .badge {
-            font-weight: 600;
-            letter-spacing: 0.02em;
-        }
-
-        /* HTMX Loading Indicator Overlay */
         .loading-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -202,40 +220,15 @@
             border-radius: 16px;
         }
         .htmx-request .loading-overlay { display: flex; }
-        .htmx-request.loading-overlay { display: flex; }
-
-        .spinner-glow {
-            width: 45px;
-            height: 45px;
-            border: 3px solid rgba(56, 189, 248, 0.08);
-            border-radius: 50%;
-            border-top-color: var(--accent-blue);
-            animation: spin 0.75s linear infinite;
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Pulse Status Indicator */
-        .pulse-dot {
-            width: 8px;
-            height: 8px;
-            background: var(--accent-emerald);
-            border-radius: 50%;
-            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
-            animation: pulse 1.8s infinite;
-        }
-        @keyframes pulse {
-            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
+        .spinner-glow { width: 45px; height: 45px; border: 3px solid rgba(56, 189, 248, 0.08); border-radius: 50%; border-top-color: var(--accent-blue); animation: spin 0.75s linear infinite; box-shadow: 0 0 20px rgba(56, 189, 248, 0.25); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .pulse-dot { width: 8px; height: 8px; background: var(--accent-emerald); border-radius: 50%; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); animation: pulse 1.8s infinite; }
+        @keyframes pulse { 70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg border-bottom rgba(255,255,255,0.05) py-3 mb-4" style="background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(12px); border-bottom: 1px solid var(--panel-border) !important;">
+    <nav class="navbar navbar-expand-lg py-3 mb-4" style="background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(12px); border-bottom: 1px solid var(--panel-border);">
         <div class="container-fluid px-4">
             <a class="navbar-brand d-flex align-items-center gap-2 text-white fw-bold" href="#">
                 <span class="d-flex align-items-center justify-content-center bg-dark rounded-circle" style="width: 24px; height: 24px;">
@@ -261,68 +254,57 @@
         </div>
     </nav>
 
-    <!-- Fixed container-fluid typo here -->
-    <div class="container-fluid px-4">
+    <div class="main-wrapper">
 
-        <div class="row g-4 mb-4" id="stats-panel">
-            <div class="col-12 col-sm-6 col-lg-3">
-                <div class="glass-panel stat-card blue" id="stat-total-card">
-                    <div class="stat-value" id="stats-total">{{ stats.total }}</div>
-                    <div class="stat-label">Total Virtual Machines</div>
-                </div>
+        <div class="cards-grid-layout" id="stats-panel">
+            <div class="glass-panel stat-card blue">
+                <div class="stat-value" id="stats-total">{{ stats.total }}</div>
+                <div class="stat-label">Total Virtual Machines</div>
             </div>
-            <div class="col-12 col-sm-6 col-lg-3">
-                <div class="glass-panel stat-card emerald" id="stat-running-card">
-                    <div class="stat-value text-success" id="stats-running">{{ stats.running }}</div>
-                    <div class="stat-label">Running States</div>
-                </div>
+            <div class="glass-panel stat-card emerald">
+                <div class="stat-value text-success" id="stats-running">{{ stats.running }}</div>
+                <div class="stat-label">Running States</div>
             </div>
-            <div class="col-12 col-sm-6 col-lg-3">
-                <div class="glass-panel stat-card rose" id="stat-stopped-card">
-                    <div class="stat-value text-danger" id="stats-stopped">{{ stats.stopped }}</div>
-                    <div class="stat-label">Stopped States</div>
-                </div>
+            <div class="glass-panel stat-card rose">
+                <div class="stat-value text-danger" id="stats-stopped">{{ stats.stopped }}</div>
+                <div class="stat-label">Stopped States</div>
             </div>
-            <div class="col-12 col-sm-6 col-lg-3">
-                <div class="glass-panel stat-card amber" id="stat-agent-card">
-                    <div class="stat-value text-warning" id="stats-active-agents">{{ stats.with_agent }}</div>
-                    <div class="stat-label">QEMU Guest Agents Active</div>
-                </div>
+            <div class="glass-panel stat-card amber">
+                <div class="stat-value text-warning" id="stats-active-agents">{{ stats.with_agent }}</div>
+                <div class="stat-label">QEMU Guest Agents Active</div>
             </div>
         </div>
 
-        <div class="row mb-4 g-3 align-items-center">
-            <div class="col-12 col-md-6 col-lg-4">
-                <input type="text" id="search-input" class="form-control search-control" placeholder="Filter by Name, ID, Tag, or IP..." onkeyup="filterTable()">
+        <div class="filters-flex-layout">
+            <div class="filter-item-search">
+                <input type="text" id="search-input" class="form-control search-control" placeholder="🔍 Search by Name, ID, Tag, or IP..." onkeyup="filterTable()">
             </div>
-            <div class="col-12 col-md-3 col-lg-2">
+            <div class="filter-item-select">
                 <select id="status-filter" class="form-select search-control" onchange="filterTable()">
                     <option value="all">👁️ All Statuses</option>
                     <option value="running">🟢 Running</option>
                     <option value="stopped">🔴 Stopped</option>
                 </select>
             </div>
-            <!-- Excel-like Dropdown Tag Filter -->
-            <div class="col-12 col-md-3 col-lg-2">
-                <div class="dropdown" style="position: relative;">
-                    <button class="btn btn-outline-secondary dropdown-toggle w-100 search-control text-start d-flex justify-content-between align-items-center" type="button" id="tags-dropdown-btn" aria-expanded="false" style="border: 1px solid var(--panel-border) !important; background: rgba(15, 23, 42, 0.6) !important; color: var(--text-main) !important;">
-                        <span>🏷️ Filter Tags</span>
+            <div class="filter-item-select">
+                <div class="excel-dropdown">
+                    <button class="form-control search-control text-start d-flex justify-content-between align-items-center" type="button" id="dropdownMenuButton" onclick="toggleTagsDropdown(event)">
+                        <span id="dropdown-title">🏷️ Filter by Tags (All)</span>
+                        <span>▼</span>
                     </button>
-                    <div class="dropdown-menu p-3 glass-panel" id="tags-dropdown-list">
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" id="tag-select-all" checked onchange="toggleAllTags(this)">
-                            <label class="form-check-label fw-bold text-info" for="tag-select-all" style="cursor: pointer;">Select All</label>
+                    <div class="excel-dropdown-menu" id="tags-dropdown-menu">
+                        <div class="excel-dropdown-item" onclick="event.stopPropagation();">
+                            <input type="checkbox" id="tag-select-all" checked onchange="toggleAllTags(this)">
+                            <label for="tag-select-all" class="fw-bold text-white m-0 ms-1" style="cursor:pointer;">Select All</label>
                         </div>
-                        <hr class="border-secondary mb-2 mt-1">
-                        <div id="dynamic-tags-container">
-                            <!-- Dynamic tag checkboxes go here -->
-                        </div>
+                        <hr class="my-1 border-secondary">
+                        <div id="tags-checkboxes-list"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="position-relative">
+        <div class="position-relative" style="width: 100%;">
             <div id="loading" class="loading-overlay">
                 <div class="text-center">
                     <div class="spinner-glow mb-3 mx-auto"></div>
@@ -330,17 +312,17 @@
                 </div>
             </div>
 
-            <div class="glass-panel p-0 table-responsive" style="border-radius: 14px; overflow: hidden;">
-                <table class="table custom-table">
+            <div class="glass-panel p-0 table-responsive-stretched">
+                <table class="table custom-table" id="vm-table">
                     <thead>
                         <tr>
-                            <th class="sortable" onclick="sortTable(0, 'int')">VM ID<span class="sort-arrow" style="opacity: 0.3;"> ↕</span></th>
-                            <th class="sortable" onclick="sortTable(1, 'text')">Name<span class="sort-arrow" style="opacity: 0.3;"> ↕</span></th>
-                            <th class="sortable" onclick="sortTable(2, 'text')">Status<span class="sort-arrow" style="opacity: 0.3;"> ↕</span></th>
-                            <th class="sortable" onclick="sortTable(3, 'text')">Node<span class="sort-arrow" style="opacity: 0.3;"> ↕</span></th>
-                            <th>IP Address</th>
-                            <th class="sortable" onclick="sortTable(5, 'float')">CPU<span class="sort-arrow" style="opacity: 0.3;"> ↕</span></th>
-                            <th class="sortable" onclick="sortTable(6, 'float')">Memory<span class="sort-arrow" style="opacity: 0.3;"> ↕</span></th>
+                            <th onclick="sortTable(0, 'int')">VM ID <span class="sort-icon"></span></th>
+                            <th onclick="sortTable(1, 'string')">Name <span class="sort-icon"></span></th>
+                            <th onclick="sortTable(2, 'string')">Status <span class="sort-icon"></span></th>
+                            <th onclick="sortTable(3, 'string')">Node <span class="sort-icon"></span></th>
+                            <th onclick="sortTable(4, 'string')">IP Address <span class="sort-icon"></span></th>
+                            <th onclick="sortTable(5, 'float')">CPU <span class="sort-icon"></span></th>
+                            <th onclick="sortTable(6, 'float')">Memory <span class="sort-icon"></span></th>
                             <th>Tags</th>
                         </tr>
                     </thead>
@@ -354,13 +336,9 @@
     </div>
 
     <script src="{{ url_for('static', path='js/htmx.min.js') }}"></script>
-
     <script>
-        // Sort State
-        let currentSortColumn = -1;
-        let currentSortAscending = true;
+        let sortDirections = {};
 
-        // Clipboard copy functionality
         function copyToClipboard(text, btn) {
             navigator.clipboard.writeText(text).then(() => {
                 const originalHTML = btn.innerHTML;
@@ -369,116 +347,77 @@
             }).catch(err => { console.error('Copy failed: ', err); });
         }
 
-        // Vanilla Dropdown Toggle
-        const dropdownBtn = document.getElementById('tags-dropdown-btn');
-        const dropdownList = document.getElementById('tags-dropdown-list');
-
-        if (dropdownBtn && dropdownList) {
-            dropdownBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                dropdownList.classList.toggle('show');
-            });
-
-            document.addEventListener('click', function(e) {
-                if (!dropdownList.contains(e.target) && e.target !== dropdownBtn) {
-                    dropdownList.classList.remove('show');
-                }
-            });
+        /* Excel Tags Dropdown Controls */
+        function toggleTagsDropdown(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('tags-dropdown-menu');
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
         }
 
-        // Tag Checklist Builder
+        document.addEventListener('click', function() {
+            document.getElementById('tags-dropdown-menu').style.display = 'none';
+        });
+
+        function toggleAllTags(master) {
+            const checkboxes = document.querySelectorAll('#tags-checkboxes-list input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = master.checked);
+            filterTable();
+        }
+
         function updateTagDropdown() {
-            const container = document.getElementById('dynamic-tags-container');
-            if (!container) return;
-
             const rows = document.querySelectorAll('#vm-table-body tr');
-            const allTags = new Set();
-
+            const tagsSet = new Set();
             rows.forEach(row => {
                 const tagsStr = row.getAttribute('data-tags') || '';
                 if (tagsStr) {
-                    const tags = tagsStr.replace(/;/g, ',').split(',').map(t => t.trim()).filter(t => t);
-                    tags.forEach(t => allTags.add(t));
+                    tagsStr.split(/[,; ]+/).forEach(t => { if (t.trim()) tagsSet.add(t.trim()); });
                 }
             });
 
-            // Save previous checkbox selections to maintain states
+            const listContainer = document.getElementById('tags-checkboxes-list');
+            if (!listContainer) return;
+
             const previouslyChecked = new Set();
-            const checkboxes = container.querySelectorAll('.tag-checkbox');
-            checkboxes.forEach(cb => {
-                if (cb.checked) {
-                    previouslyChecked.add(cb.value);
-                }
-            });
+            listContainer.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => previouslyChecked.add(cb.value));
 
-            const hasPreviousSelection = checkboxes.length > 0;
-            container.innerHTML = '';
+            const initialLoad = listContainer.children.length === 0;
+            listContainer.innerHTML = '';
 
-            if (allTags.size === 0) {
-                container.innerHTML = '<div class="text-muted small italic">No tags found</div>';
-                return;
-            }
-
-            const sortedTags = Array.from(allTags).sort();
-            sortedTags.forEach(tag => {
+            Array.from(tagsSet).sort().forEach(tag => {
+                const shouldCheck = initialLoad || previouslyChecked.has(tag);
                 const div = document.createElement('div');
-                div.className = 'form-check mb-1';
-                const isChecked = (!hasPreviousSelection) || previouslyChecked.has(tag);
+                div.className = 'excel-dropdown-item';
+                div.onclick = (e) => e.stopPropagation();
                 div.innerHTML = `
-                    <input class="form-check-input tag-checkbox" type="checkbox" value="${tag}" id="tag-cb-${tag}" ${isChecked ? 'checked' : ''} onchange="onTagCheckboxChange()">
-                    <label class="form-check-label text-light small" for="tag-cb-${tag}" style="cursor: pointer;">${tag}</label>
+                    <input type="checkbox" value="${tag}" id="cb-tag-${tag}" ${shouldCheck ? 'checked' : ''} onchange="onTagCheckboxChange()">
+                    <label for="cb-tag-${tag}" class="text-white m-0 ms-1" style="cursor:pointer; width:100%;">${tag}</label>
                 `;
-                container.appendChild(div);
+                listContainer.appendChild(div);
             });
-
-            updateSelectAllState();
         }
 
         function onTagCheckboxChange() {
-            updateSelectAllState();
+            const totalCbs = document.querySelectorAll('#tags-checkboxes-list input[type="checkbox"]').length;
+            const checkedCbs = document.querySelectorAll('#tags-checkboxes-list input[type="checkbox"]:checked').length;
+            document.getElementById('tag-select-all').checked = (totalCbs === checkedCbs);
             filterTable();
         }
 
-        function updateSelectAllState() {
-            const selectAllCb = document.getElementById('tag-select-all');
-            if (!selectAllCb) return;
-
-            const checkboxes = document.querySelectorAll('.tag-checkbox');
-            if (checkboxes.length === 0) {
-                selectAllCb.checked = true;
-                return;
-            }
-
-            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-            const noneChecked = Array.from(checkboxes).every(cb => !cb.checked);
-            
-            selectAllCb.checked = allChecked;
-            selectAllCb.indeterminate = !allChecked && !noneChecked;
-        }
-
-        function toggleAllTags(source) {
-            const checkboxes = document.querySelectorAll('.tag-checkbox');
-            checkboxes.forEach(cb => {
-                cb.checked = source.checked;
-            });
-            filterTable();
-        }
-
-        // Global Table Row Filtering
+        /* Unified Filtering Logic */
         function filterTable() {
             const query = document.getElementById('search-input').value.toLowerCase().trim();
             const statusFilter = document.getElementById('status-filter').value;
-            const rows = document.querySelectorAll('#vm-table-body tr');
             
-            // Get checklist states
-            const checkedTags = new Set();
-            const tagCheckboxes = document.querySelectorAll('.tag-checkbox');
-            tagCheckboxes.forEach(cb => {
-                if (cb.checked) checkedTags.add(cb.value);
-            });
+            const selectAllCb = document.getElementById('tag-select-all').checked;
+            const checkedBoxes = document.querySelectorAll('#tags-checkboxes-list input[type="checkbox"]:checked');
+            const activeTags = Array.from(checkedBoxes).map(cb => cb.value);
+            
+            // Update title label text
+            const titleSpan = document.getElementById('dropdown-title');
+            if (selectAllCb) { titleSpan.innerText = '🏷️ Filter by Tags (All)'; }
+            else { titleSpan.innerText = `🏷️ Filter by Tags (${checkedBoxes.length} Selected)`; }
 
-            const selectAllCb = document.getElementById('tag-select-all');
-
+            const rows = document.querySelectorAll('#vm-table-body tr');
             rows.forEach(row => {
                 const id = row.getAttribute('data-vmid') || '';
                 const name = (row.getAttribute('data-name') || '').toLowerCase();
@@ -486,105 +425,52 @@
                 const ip = (row.getAttribute('data-ip') || '').toLowerCase();
                 const status = row.getAttribute('data-status');
                 
-                const rowTags = tagsStr.replace(/;/g, ',').split(',').map(t => t.trim()).filter(t => t);
-
                 const matchesQuery = id.includes(query) || name.includes(query) || tagsStr.includes(query) || ip.includes(query);
                 const matchesStatus = statusFilter === 'all' || status === statusFilter;
                 
-                // Excel-like Tag Match Logic
-                let matchesTags = false;
-                if (tagCheckboxes.length === 0) {
-                    matchesTags = true;
-                } else {
-                    if (rowTags.length === 0) {
-                        matchesTags = selectAllCb && selectAllCb.checked;
-                    } else {
-                        matchesTags = rowTags.some(tag => checkedTags.has(tag));
-                    }
+                let matchesTags = selectAllCb;
+                if (!selectAllCb) {
+                    const rowTags = tagsStr.split(/[,; ]+/).map(t => t.trim()).filter(Boolean);
+                    if (rowTags.length === 0) { matchesTags = activeTags.length === 0; }
+                    else { matchesTags = rowTags.some(t => activeTags.includes(t)); }
                 }
-
+                
                 row.style.display = (matchesQuery && matchesStatus && matchesTags) ? '' : 'none';
             });
         }
 
-        // Column Sorting Logic
+        /* Interactive Client-Side Column Sorting */
         function sortTable(columnIndex, type) {
-            const table = document.querySelector('.custom-table');
-            const tbody = table.querySelector('tbody');
-            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const table = document.getElementById("vm-table");
+            const tbody = document.getElementById("vm-table-body");
+            const rows = Array.from(tbody.querySelectorAll("tr"));
             
-            if (currentSortColumn === columnIndex) {
-                currentSortAscending = !currentSortAscending;
-            } else {
-                currentSortColumn = columnIndex;
-                currentSortAscending = true;
-            }
-            
-            // Render arrow directions on headers
-            const headers = table.querySelectorAll('thead th');
-            headers.forEach((th, idx) => {
-                const arrow = th.querySelector('.sort-arrow');
-                if (arrow) {
-                    if (idx === columnIndex) {
-                        arrow.textContent = currentSortAscending ? ' ▲' : ' ▼';
-                        arrow.style.opacity = '1';
-                        th.classList.add('sorted');
-                    } else {
-                        arrow.textContent = ' ↕';
-                        arrow.style.opacity = '0.3';
-                        th.classList.remove('sorted');
-                    }
-                }
-            });
+            let asc = !sortDirections[columnIndex];
+            sortDirections = {}; 
+            sortDirections[columnIndex] = asc;
 
-            // Perform sorting
-            rows.sort((a, b) => {
-                let valA = getCellValue(a, columnIndex, type);
-                let valB = getCellValue(b, columnIndex, type);
+            // Clear indicators
+            table.querySelectorAll('th .sort-icon').forEach(si => si.innerText = '');
+            table.querySelectorAll('th')[columnIndex].querySelector('.sort-icon').innerText = asc ? ' ▲' : ' ▼';
 
-                if (type === 'int' || type === 'float') {
-                    return currentSortAscending ? valA - valB : valB - valA;
+            rows.sort((rowA, rowB) => {
+                let cellA = rowA.children[columnIndex].innerText.trim();
+                let cellB = rowB.children[columnIndex].innerText.trim();
+
+                if (type === 'int') {
+                    return (parseInt(cellA) || 0) - (parseInt(cellB) || 0);
+                } else if (type === 'float') {
+                    return (parseFloat(cellA.replace('%', '')) || 0) - (parseFloat(cellB.replace('%', '')) || 0);
                 } else {
-                    return currentSortAscending 
-                        ? valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' })
-                        : valB.localeCompare(valA, undefined, { numeric: true, sensitivity: 'base' });
+                    return cellA.localeCompare(cellB);
                 }
             });
 
-            // Re-render rows inside table body
+            if (!asc) rows.reverse();
             rows.forEach(row => tbody.appendChild(row));
         }
 
-        function getCellValue(row, idx, type) {
-            const cell = row.children[idx];
-            if (!cell) return '';
-
-            if (type === 'int') {
-                const val = parseInt(cell.textContent.trim(), 10);
-                return isNaN(val) ? 0 : val;
-            }
-            
-            if (type === 'float') {
-                const text = cell.textContent.trim();
-                if (text === '-' || text === 'N/A') return -1;
-                const match = text.match(/([0-9.]+)\s*%/);
-                if (match) {
-                    const val = parseFloat(match[1]);
-                    return isNaN(val) ? -1 : val;
-                }
-                const val = parseFloat(text);
-                return isNaN(val) ? -1 : val;
-            }
-
-            return cell.textContent.trim().toLowerCase();
-        }
-
-        // Trigger tag builders on DOM content load
-        window.addEventListener('DOMContentLoaded', () => {
-            updateTagDropdown();
-        });
-
-        // Intercept normal browser reloads
+        // Intercept System F5 / Refresh Keys
         document.addEventListener('keydown', function(e) {
             if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
                 e.preventDefault();
@@ -593,24 +479,16 @@
             }
         });
 
-        // Keep UI configurations (sorting/filters) active after HTMX updates the data
+        // Initialize and Hook into HTMX Updates
+        document.addEventListener('DOMContentLoaded', () => {
+            updateTagDropdown();
+            filterTable();
+        });
+        
         document.addEventListener('htmx:afterSwap', function(evt) {
             if (evt.detail.target.id === 'vm-table-body') {
                 updateTagDropdown();
-                
-                if (currentSortColumn !== -1) {
-                    const col = currentSortColumn;
-                    currentSortColumn = -1; // reset to let sortTable toggle it back
-                    currentSortAscending = !currentSortAscending; // correct direction toggle
-                    
-                    let type = 'text';
-                    if (col === 0) type = 'int';
-                    else if (col === 5 || col === 6) type = 'float';
-                    
-                    sortTable(col, type);
-                } else {
-                    filterTable();
-                }
+                filterTable();
             }
         });
     </script>
