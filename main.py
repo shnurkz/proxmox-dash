@@ -221,8 +221,9 @@ async def read_dashboard(request: Request):
     """
     vms, stats = await get_cached_vms_and_stats(request.app.state.client)
     return templates.TemplateResponse(
-        "index.html",
-        {"request": request, "vms": vms, "stats": stats}
+        request=request,
+        name="index.html",
+        context={"vms": vms, "stats": stats}
     )
 
 
@@ -233,6 +234,7 @@ async def api_vms(request: Request):
     """
     vms, stats = await get_cached_vms_and_stats(request.app.state.client)
     return templates.TemplateResponse(
-        "vms_partial.html",
-        {"request": request, "vms": vms, "stats": stats}
+        request=request,
+        name="vms_partial.html",
+        context={"vms": vms, "stats": stats}
     )
