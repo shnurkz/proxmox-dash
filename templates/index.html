@@ -4,117 +4,294 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proxmox VE Monitor</title>
-    <!-- Local Assets for Air-Gapped Environment -->
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/bootstrap.min.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/bootstrap.min.css') }}">
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --panel-bg: rgba(17, 24, 39, 0.55);
+            --panel-border: rgba(255, 255, 255, 0.07);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-emerald: #10b981;
+            --accent-rose: #f43f5e;
+            --accent-amber: #fbbf24;
+            --glow: rgba(56, 189, 248, 0.15);
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            padding-bottom: 3rem;
+        }
+
+        /* Glassmorphism Panel Base */
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        /* Premium Stat Cards */
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+            border-left: 4px solid transparent;
+        }
+        .stat-card.blue { border-left-color: var(--accent-blue); }
+        .stat-card.emerald { border-left-color: var(--accent-emerald); }
+        .stat-card.rose { border-left-color: var(--accent-rose); }
+        .stat-card.amber { border-left-color: var(--accent-amber); }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1;
+            margin-bottom: 0.4rem;
+            font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        /* Input & Filter Controls */
+        .search-control {
+            background: rgba(15, 23, 42, 0.6) !important;
+            border: 1px solid var(--panel-border) !important;
+            color: var(--text-main) !important;
+            border-radius: 10px !important;
+            padding: 0.65rem 1.2rem !important;
+        }
+        .search-control::placeholder {
+            color: #475569;
+        }
+        .search-control:focus {
+            border-color: var(--accent-blue) !important;
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25) !important;
+        }
+
+        /* Table Aesthetics */
+        .custom-table {
+            margin-bottom: 0;
+            color: var(--text-main);
+            vertical-align: middle;
+        }
+        .custom-table thead th {
+            background: rgba(15, 23, 42, 0.75);
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            padding: 1.1rem 1.25rem;
+            border-bottom: 1px solid var(--panel-border);
+        }
+        .custom-table tbody tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            background: transparent !important;
+            transition: background-color 0.15s ease;
+        }
+        .custom-table tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.02) !important;
+        }
+        .custom-table tbody td {
+            padding: 1rem 1.25rem;
+            color: #e2e8f0;
+        }
+
+        /* Utilities Progress Bars */
+        .util-progress {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 50px;
+            height: 6px;
+            overflow: hidden;
+            width: 120px;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            margin-top: 4px;
+        }
+        .util-progress-bar {
+            height: 100%;
+            border-radius: 50px;
+            transition: width 0.4s ease;
+        }
+        .util-progress-bar.emerald { background: linear-gradient(90deg, #059669, var(--accent-emerald)); }
+        .util-progress-bar.amber { background: linear-gradient(90deg, #d97706, var(--accent-amber)); }
+        .util-progress-bar.rose { background: linear-gradient(90deg, #dc2626, var(--accent-rose)); }
+
+        /* Premium Futuristic Button */
+        .btn-premium {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: white !important;
+            font-weight: 600;
+            border-radius: 10px;
+            padding: 0.6rem 1.3rem;
+            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
+            transition: all 0.2s ease;
+        }
+        .btn-premium:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45);
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        }
+
+        /* Badges */
+        .badge {
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        /* HTMX Loading Indicator Overlay */
+        .loading-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(9, 13, 22, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+        }
+        .htmx-request .loading-overlay { display: flex; }
+        .htmx-request.loading-overlay { display: flex; }
+
+        .spinner-glow {
+            width: 45px;
+            height: 45px;
+            border: 3px solid rgba(56, 189, 248, 0.08);
+            border-radius: 50%;
+            border-top-color: var(--accent-blue);
+            animation: spin 0.75s linear infinite;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Pulse Status Indicator */
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-emerald);
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+            animation: pulse 1.8s infinite;
+        }
+        @keyframes pulse {
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+    </style>
 </head>
 <body>
 
-    <!-- Header Section -->
-    <nav class="navbar navbar-expand-lg border-bottom border-secondary-subtle py-3 mb-4" style="background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(10px);">
+    <nav class="navbar navbar-expand-lg border-bottom rgba(255,255,255,0.05) py-3 mb-4" style="background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(12px); border-bottom: 1px solid var(--panel-border) !important;">
         <div class="container-fluid px-4">
-            <a class="navbar-brand d-flex align-items-center gap-2 text-white font-weight-bold" href="#">
-                <span class="status-badge running py-1 px-2 border-0">
+            <a class="navbar-brand d-flex align-items-center gap-2 text-white fw-bold" href="#">
+                <span class="d-flex align-items-center justify-content-center bg-dark rounded-circle" style="width: 24px; height: 24px;">
                     <span class="pulse-dot"></span>
                 </span>
-                <span class="fs-4 tracking-tight">Proxmox VE <span class="text-secondary fs-5">Monitor</span></span>
+                <span class="fs-4 tracking-tight">Proxmox VE <span class="text-info fs-5 fw-normal">Real-Time Monitor</span></span>
             </a>
             
             <div class="d-flex align-items-center gap-3">
-                <div id="api-status" class="text-secondary small d-flex align-items-center gap-2">
-                    <span class="d-inline-block rounded-circle bg-success" style="width: 8px; height: 8px;"></span>
-                    API Connected
+                <div id="api-status" class="text-muted small d-flex align-items-center gap-2 fw-semibold">
+                    <span class="d-inline-block rounded-circle bg-success shadow-sm" style="width: 8px; height: 8px; box-shadow: 0 0 8px var(--accent-emerald);"></span>
+                    PVE API Connected
                 </div>
                 <button id="refresh-btn" 
                         hx-get="{{ url_for('api_vms') }}" 
                         hx-target="#vm-table-body" 
                         hx-indicator="#loading"
                         class="btn btn-premium d-flex align-items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
                     Refresh
                 </button>
             </div>
         </div>
     </nav>
 
-    <!-- Main Container -->
     <div class="container-fluid px-4">
 
-        <!-- Metrics Row -->
         <div class="row g-4 mb-4" id="stats-panel">
-            <!-- Total VMs -->
             <div class="col-12 col-sm-6 col-lg-3">
-                <div class="glass-panel stat-card blue fade-in-entry" id="stat-total-card">
+                <div class="glass-panel stat-card blue" id="stat-total-card">
                     <div class="stat-value" id="stats-total">{{ stats.total }}</div>
                     <div class="stat-label">Total Virtual Machines</div>
                 </div>
             </div>
-            <!-- Running VMs -->
             <div class="col-12 col-sm-6 col-lg-3">
-                <div class="glass-panel stat-card emerald fade-in-entry" id="stat-running-card">
+                <div class="glass-panel stat-card emerald" id="stat-running-card">
                     <div class="stat-value text-success" id="stats-running">{{ stats.running }}</div>
-                    <div class="stat-label">Running</div>
+                    <div class="stat-label">Running States</div>
                 </div>
             </div>
-            <!-- Stopped VMs -->
             <div class="col-12 col-sm-6 col-lg-3">
-                <div class="glass-panel stat-card rose fade-in-entry" id="stat-stopped-card">
-                    <div class="stat-value text-secondary" id="stats-stopped">{{ stats.stopped }}</div>
-                    <div class="stat-label">Stopped</div>
+                <div class="glass-panel stat-card rose" id="stat-stopped-card">
+                    <div class="stat-value text-danger" id="stats-stopped">{{ stats.stopped }}</div>
+                    <div class="stat-label">Stopped States</div>
                 </div>
             </div>
-            <!-- VMs with IP -->
             <div class="col-12 col-sm-6 col-lg-3">
-                <div class="glass-panel stat-card amber fade-in-entry" id="stat-agent-card">
+                <div class="glass-panel stat-card amber" id="stat-agent-card">
                     <div class="stat-value text-warning" id="stats-active-agents">{{ stats.with_agent }}</div>
-                    <div class="stat-label">QEMU Agent Active</div>
+                    <div class="stat-label">QEMU Guest Agents Active</div>
                 </div>
             </div>
         </div>
 
-        <!-- Filter and Search Row -->
         <div class="row mb-4 g-3 align-items-center">
-            <div class="col-12 col-md-6">
-                <div class="position-relative">
-                    <input type="text" id="search-input" class="form-control search-control" placeholder="Search by VM Name, ID, Tag, or IP address..." onkeyup="filterTable()">
-                </div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <input type="text" id="search-input" class="form-control search-control" placeholder="Filter by Name, ID, Tag, or IP..." onkeyup="filterTable()">
             </div>
             <div class="col-12 col-md-3 col-lg-2">
                 <select id="status-filter" class="form-select search-control" onchange="filterTable()">
-                    <option value="all">All Statuses</option>
-                    <option value="running">Running</option>
-                    <option value="stopped">Stopped</option>
+                    <option value="all">👁️ All Statuses</option>
+                    <option value="running">🟢 Running</option>
+                    <option value="stopped">🔴 Stopped</option>
                 </select>
             </div>
         </div>
 
-        <!-- Table Panel -->
         <div class="position-relative">
-            <!-- Loading Overlay -->
             <div id="loading" class="loading-overlay">
                 <div class="text-center">
-                    <div class="spinner-glow mb-3"></div>
-                    <div class="text-secondary small tracking-wider uppercase fw-bold">Fetching Live Proxmox Data...</div>
+                    <div class="spinner-glow mb-3 mx-auto"></div>
+                    <div class="text-info small tracking-wider uppercase fw-bold">Querying Cluster Resources Concurrently...</div>
                 </div>
             </div>
 
-            <!-- Table -->
-            <div class="glass-panel p-0 table-responsive">
+            <div class="glass-panel p-0 table-responsive" style="border-radius: 14px; overflow: hidden;">
                 <table class="table custom-table">
                     <thead>
                         <tr>
-                            <th style="width: 80px;">VM ID</th>
+                            <th style="width: 90px;">VM ID</th>
                             <th>Name</th>
                             <th>Status</th>
                             <th>Node</th>
                             <th>IP Address</th>
-                            <th style="width: 180px;">CPU Utilization</th>
-                            <th style="width: 180px;">Memory Utilization</th>
+                            <th>CPU</th>
+                            <th>Memory</th>
                             <th>Tags</th>
                         </tr>
                     </thead>
                     <tbody id="vm-table-body">
-                        <!-- Initial items server-rendered -->
                         {% include 'vms_rows.html' %}
                     </tbody>
                 </table>
@@ -123,25 +300,17 @@
 
     </div>
 
-    <!-- Local HTMX Library -->
-    <script src="{{ url_for('static', path='/js/htmx.min.js') }}"></script>
+    <script src="{{ url_for('static', path='js/htmx.min.js') }}"></script>
 
-    <!-- Client-side Logic Script -->
     <script>
-        // Copy to clipboard helper
         function copyToClipboard(text, btn) {
             navigator.clipboard.writeText(text).then(() => {
                 const originalHTML = btn.innerHTML;
-                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-                setTimeout(() => {
-                    btn.innerHTML = originalHTML;
-                }, 1500);
-            }).catch(err => {
-                console.error('Failed to copy: ', err);
-            });
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                setTimeout(() => { btn.innerHTML = originalHTML; }, 1200);
+            }).catch(err => { console.error('Copy failed: ', err); });
         }
 
-        // Search and Status Filters
         function filterTable() {
             const query = document.getElementById('search-input').value.toLowerCase().trim();
             const statusFilter = document.getElementById('status-filter').value;
@@ -157,26 +326,18 @@
                 const matchesQuery = id.includes(query) || name.includes(query) || tags.includes(query) || ip.includes(query);
                 const matchesStatus = statusFilter === 'all' || status === statusFilter;
                 
-                if (matchesQuery && matchesStatus) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+                row.style.display = (matchesQuery && matchesStatus) ? '' : 'none';
             });
         }
 
-        // Intercept F5 and Ctrl+R to perform HTMX refresh instead of full reload
         document.addEventListener('keydown', function(e) {
             if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
                 e.preventDefault();
                 const refreshBtn = document.getElementById('refresh-btn');
-                if (refreshBtn) {
-                    refreshBtn.click();
-                }
+                if (refreshBtn) refreshBtn.click();
             }
         });
 
-        // Re-apply filter settings after HTMX updates the table contents
         document.addEventListener('htmx:afterSwap', function(evt) {
             if (evt.detail.target.id === 'vm-table-body') {
                 filterTable();
