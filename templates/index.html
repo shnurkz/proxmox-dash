@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proxmox VE Monitor</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='css/bootstrap.min.css') }}">
+    <link class="styles" rel="stylesheet" href="{{ url_for('static', path='css/bootstrap.min.css') }}">
     <style>
         :root {
             --bg-dark: #090d16;
@@ -87,15 +87,15 @@
             box-sizing: border-box;
         }
 
-        /* PURE CSS GRID FOR METRIC CARDS */
+        /* PURE CSS GRID FOR METRIC CARDS (Refactored to 3 columns) */
         .cards-grid-layout {
             display: grid !important;
-            grid-template-columns: repeat(4, 1fr) !important;
+            grid-template-columns: repeat(3, 1fr) !important;
             gap: 1.5rem !important;
             margin-bottom: 2rem !important;
             width: 100%;
         }
-        @media (max-width: 1200px) { .cards-grid-layout { grid-template-columns: repeat(2, 1fr) !important; } }
+        @media (max-width: 900px) { .cards-grid-layout { grid-template-columns: repeat(2, 1fr) !important; } }
         @media (max-width: 600px) { .cards-grid-layout { grid-template-columns: 1fr !important; } }
 
         .stat-card {
@@ -106,7 +106,6 @@
         .stat-card.blue { border-left-color: var(--accent-blue); }
         .stat-card.emerald { border-left-color: var(--accent-emerald); }
         .stat-card.rose { border-left-color: var(--accent-rose); }
-        .stat-card.amber { border-left-color: var(--accent-amber); }
 
         .stat-value {
             font-size: 2.5rem;
@@ -136,18 +135,11 @@
         }
         .filter-item-search { flex: 2 1 350px !important; max-width: 500px !important; }
         .filter-item-select { flex: 1 1 200px !important; max-width: 250px !important; }
-        .filter-item-btn {
-            flex: 0 1 auto !important;
-            margin-left: auto !important; /* Push the Refresh button to the far right */
-        }
 
         /* Standardize input heights across controls */
-        .search-control, .filters-flex-layout .btn-premium {
+        .search-control {
             height: 44px !important;
             box-sizing: border-box !important;
-        }
-
-        .search-control {
             background: rgba(15, 23, 42, 0.6) !important;
             border: 1px solid var(--panel-border) !important;
             color: var(--text-main) !important;
@@ -242,21 +234,6 @@
         .util-progress-bar.amber { background: linear-gradient(90deg, #d97706, var(--accent-amber)); }
         .util-progress-bar.rose { background: linear-gradient(90deg, #dc2626, var(--accent-rose)); }
 
-        .btn-premium {
-            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: white !important;
-            font-weight: 600;
-            border-radius: 10px;
-            padding: 0.6rem 1.3rem;
-            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .btn-premium:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45); background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); }
-
         .loading-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -288,6 +265,7 @@
             </div>
         </div>
 
+        <!-- 3 Cards Layout -->
         <div class="cards-grid-layout" id="stats-panel">
             <div class="glass-panel stat-card blue">
                 <div class="stat-value" id="stats-total">{{ stats.total }}</div>
@@ -300,10 +278,6 @@
             <div class="glass-panel stat-card rose">
                 <div class="stat-value text-danger" id="stats-stopped">{{ stats.stopped }}</div>
                 <div class="stat-label">Stopped States</div>
-            </div>
-            <div class="glass-panel stat-card amber">
-                <div class="stat-value text-warning" id="stats-active-agents">{{ stats.with_agent }}</div>
-                <div class="stat-label">QEMU Guest Agents Active</div>
             </div>
         </div>
 
@@ -333,17 +307,6 @@
                         <div id="tags-checkboxes-list"></div>
                     </div>
                 </div>
-            </div>
-            <!-- Moved Refresh Button with fixed relative HTMX endpoint route -->
-            <div class="filter-item-btn">
-                <button id="refresh-btn" 
-                        hx-get="/proxmox-dashboard/api/vms" 
-                        hx-target="#vm-table-body" 
-                        hx-indicator="#loading"
-                        class="btn btn-premium gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-                    Refresh
-                </button>
             </div>
         </div>
 
@@ -512,15 +475,6 @@
             if (!asc) rows.reverse();
             rows.forEach(row => tbody.appendChild(row));
         }
-
-        // Intercept System F5 / Refresh Keys
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
-                e.preventDefault();
-                const refreshBtn = document.getElementById('refresh-btn');
-                if (refreshBtn) refreshBtn.click();
-            }
-        });
 
         // Initialize and Hook into HTMX Updates
         document.addEventListener('DOMContentLoaded', () => {
