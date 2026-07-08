@@ -1,5 +1,6 @@
 {% for vm in vms %}
-<tr data-vmid="{{ vm.vmid }}" data-name="{{ vm.name }}" data-tags="{{ vm.tags_str }}" data-ip="{{ vm.ip }}" data-status="{{ vm.status }}">
+<tr data-vmid="{{ vm.vmid }}" data-name="{{ vm.name }}" data-tags="{{ vm.tags_str }}" data-ip="{{ vm.ip }}"
+    data-status="{{ vm.status }}">
     <td class="text-secondary font-monospace">{{ vm.vmid }}</td>
     <td class="fw-bold text-white">{{ vm.name }}</td>
     <td>
@@ -15,7 +16,11 @@
         <div class="d-flex align-items-center gap-2">
             <span class="font-monospace text-warning">{{ vm.ip }}</span>
             <button class="btn btn-sm btn-link p-0 text-secondary" onclick="copyToClipboard('{{ vm.ip }}', this)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
             </button>
         </div>
         {% elif vm.status == 'running' %}
@@ -32,11 +37,11 @@
         <div class="util-progress">
             {% set cpu_pct = vm.cpu * 100 %}
             {% if cpu_pct > 80 %}
-                {% set cpu_color = "rose" %}
+            {% set cpu_color = "rose" %}
             {% elif cpu_pct > 50 %}
-                {% set cpu_color = "amber" %}
+            {% set cpu_color = "amber" %}
             {% else %}
-                {% set cpu_color = "emerald" %}
+            {% set cpu_color = "emerald" %}
             {% endif %}
             <div class="util-progress-bar {{ cpu_color }}" style="width: {{ cpu_pct }}%"></div>
         </div>
@@ -47,24 +52,24 @@
 
     <td>
         {% if vm.status == 'running' %}
-            {% if vm.maxmem > 0 %}
-                {% set mem_pct = (vm.mem / vm.maxmem) * 100 %}
+        {% if vm.maxmem > 0 %}
+        {% set mem_pct = (vm.mem / vm.maxmem) * 100 %}
+        {% else %}
+        {% set mem_pct = 0 %}
+        {% endif %}
+        <div class="d-flex align-items-center justify-content-between">
+            <span class="font-monospace small text-secondary me-2">{{ "%.1f"|format(mem_pct) }}%</span>
+        </div>
+        <div class="util-progress">
+            {% if mem_pct > 80 %}
+            {% set mem_color = "rose" %}
+            {% elif mem_pct > 50 %}
+            {% set mem_color = "amber" %}
             {% else %}
-                {% set mem_pct = 0 %}
+            {% set mem_color = "emerald" %}
             {% endif %}
-            <div class="d-flex align-items-center justify-content-between">
-                <span class="font-monospace small text-secondary me-2">{{ "%.1f"|format(mem_pct) }}%</span>
-            </div>
-            <div class="util-progress">
-                {% if mem_pct > 80 %}
-                    {% set mem_color = "rose" %}
-                {% elif mem_pct > 50 %}
-                    {% set mem_color = "amber" %}
-                {% else %}
-                    {% set mem_color = "emerald" %}
-                {% endif %}
-                <div class="util-progress-bar {{ mem_color }}" style="width: {{ mem_pct }}%"></div>
-            </div>
+            <div class="util-progress-bar {{ mem_color }}" style="width: {{ mem_pct }}%"></div>
+        </div>
         {% else %}
         <span class="text-muted small">-</span>
         {% endif %}
@@ -72,10 +77,11 @@
     <td>
         <div class="d-flex flex-wrap gap-1">
             {% for tag in vm.tags %}
-            <span class="badge bg-dark text-info border border-info-subtle px-2 py-1" style="font-size: 0.75rem;">{{ tag }}</span>
+            <span class="badge bg-dark text-info border border-info-subtle px-2 py-1" style="font-size: 0.75rem;">{{ tag
+                }}</span>
             {% else %}
             <span class="text-muted small">-</span>
-            {% endif %}
+            {% endfor %}
         </div>
     </td>
 </tr>
