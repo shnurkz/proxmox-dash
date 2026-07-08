@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proxmox VE Monitor</title>
+    <!-- Local Assets for Air-Gapped Environment -->
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/dashboard.css') }}">
+</head>
+<body>
+
+    <!-- Header Section -->
+    <nav class="navbar navbar-expand-lg border-bottom border-secondary-subtle py-3 mb-4" style="background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(10px);">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center gap-2 text-white font-weight-bold" href="#">
+                <span class="status-badge running py-1 px-2 border-0">
+                    <span class="pulse-dot"></span>
+                </span>
+                <span class="fs-4 tracking-tight">Proxmox VE <span class="text-secondary fs-5">Monitor</span></span>
+            </a>
+            
+            <div class="d-flex align-items-center gap-3">
+                <div id="api-status" class="text-secondary small d-flex align-items-center gap-2">
+                    <span class="d-inline-block rounded-circle bg-success" style="width: 8px; height: 8px;"></span>
+                    API Connected
+                </div>
+                <button id="refresh-btn" 
+                        hx-get="{{ url_for('api_vms') }}" 
+                        hx-target="#vm-table-body" 
+                        hx-indicator="#loading"
+                        class="btn btn-premium d-flex align-items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                    Refresh
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container-fluid px-4">
+
+        <!-- Metrics Row -->
+        <div class="row g-4 mb-4" id="stats-panel">
+            <!-- Total VMs -->
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="glass-panel stat-card blue fade-in-entry" id="stat-total-card">
+                    <div class="stat-value" id="stats-total">{{ stats.total }}</div>
+                    <div class="stat-label">Total Virtual Machines</div>
+                </div>
+            </div>
+            <!-- Running VMs -->
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="glass-panel stat-card emerald fade-in-entry" id="stat-running-card">
+                    <div class="stat-value text-success" id="stats-running">{{ stats.running }}</div>
+                    <div class="stat-label">Running</div>
+                </div>
+            </div>
+            <!-- Stopped VMs -->
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="glass-panel stat-card rose fade-in-entry" id="stat-stopped-card">
+                    <div class="stat-value text-secondary" id="stats-stopped">{{ stats.stopped }}</div>
+                    <div class="stat-label">Stopped</div>
+                </div>
+            </div>
+            <!-- VMs with IP -->
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="glass-panel stat-card amber fade-in-entry" id="stat-agent-card">
+                    <div class="stat-value text-warning" id="stats-active-agents">{{ stats.with_agent }}</div>
+                    <div class="stat-label">QEMU Agent Active</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter and Search Row -->
+        <div class="row mb-4 g-3 align-items-center">
+            <div class="col-12 col-md-6">
+                <div class="position-relative">
+                    <input type="text" id="search-input" class="form-control search-control" placeholder="Search by VM Name, ID, Tag, or IP address..." onkeyup="filterTable()">
+                </div>
+            </div>
+            <div class="col-12 col-md-3 col-lg-2">
+                <select id="status-filter" class="form-select search-control" onchange="filterTable()">
+                    <option value="all">All Statuses</option>
+                    <option value="running">Running</option>
+                    <option value="stopped">Stopped</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Table Panel -->
+        <div class="position-relative">
+            <!-- Loading Overlay -->
+            <div id="loading" class="loading-overlay">
+                <div class="text-center">
+                    <div class="spinner-glow mb-3"></div>
+                    <div class="text-secondary small tracking-wider uppercase fw-bold">Fetching Live Proxmox Data...</div>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="glass-panel p-0 table-responsive">
+                <table class="table custom-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">VM ID</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Node</th>
+                            <th>IP Address</th>
+                            <th style="width: 180px;">CPU Utilization</th>
+                            <th style="width: 180px;">Memory Utilization</th>
+                            <th>Tags</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vm-table-body">
+                        <!-- Initial items server-rendered -->
+                        {% include 'vms_rows.html' %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Local HTMX Library -->
+    <script src="{{ url_for('static', path='/js/htmx.min.js') }}"></script>
+
+    <!-- Client-side Logic Script -->
+    <script>
+        // Copy to clipboard helper
+        function copyToClipboard(text, btn) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                }, 1500);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+
+        // Search and Status Filters
+        function filterTable() {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            const statusFilter = document.getElementById('status-filter').value;
+            const rows = document.querySelectorAll('#vm-table-body tr');
+            
+            rows.forEach(row => {
+                const id = row.getAttribute('data-vmid') || '';
+                const name = (row.getAttribute('data-name') || '').toLowerCase();
+                const tags = (row.getAttribute('data-tags') || '').toLowerCase();
+                const ip = (row.getAttribute('data-ip') || '').toLowerCase();
+                const status = row.getAttribute('data-status');
+                
+                const matchesQuery = id.includes(query) || name.includes(query) || tags.includes(query) || ip.includes(query);
+                const matchesStatus = statusFilter === 'all' || status === statusFilter;
+                
+                if (matchesQuery && matchesStatus) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // Intercept F5 and Ctrl+R to perform HTMX refresh instead of full reload
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+                e.preventDefault();
+                const refreshBtn = document.getElementById('refresh-btn');
+                if (refreshBtn) {
+                    refreshBtn.click();
+                }
+            }
+        });
+
+        // Re-apply filter settings after HTMX updates the table contents
+        document.addEventListener('htmx:afterSwap', function(evt) {
+            if (evt.detail.target.id === 'vm-table-body') {
+                filterTable();
+            }
+        });
+    </script>
+</body>
+</html>

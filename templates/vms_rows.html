@@ -1,0 +1,82 @@
+{% for vm in vms %}
+<tr class="fade-in-entry" 
+    data-vmid="{{ vm.vmid }}" 
+    data-name="{{ vm.name }}" 
+    data-status="{{ vm.status }}" 
+    data-tags="{{ vm.tags_str }}" 
+    data-ip="{{ vm.ip }}">
+    <td>
+        <span class="text-secondary font-monospace">{{ vm.vmid }}</span>
+    </td>
+    <td>
+        <span class="fw-bold text-white">{{ vm.name }}</span>
+    </td>
+    <td>
+        {% if vm.status == 'running' %}
+        <span class="status-badge running">
+            <span class="pulse-dot"></span>
+            Running
+        </span>
+        {% else %}
+        <span class="status-badge stopped">
+            <span class="pulse-dot"></span>
+            Stopped
+        </span>
+        {% endif %}
+    </td>
+    <td>
+        <span class="badge bg-secondary-subtle text-secondary-emphasis rounded px-2 py-1">{{ vm.node }}</span>
+    </td>
+    <td>
+        {% if vm.ip != 'N/A' and vm.ip != 'No Agent' %}
+        <div class="ip-widget">
+            <span class="ip-text text-white">{{ vm.ip }}</span>
+            <button class="copy-btn" onclick="copyToClipboard('{{ vm.ip }}', this)" title="Copy IP">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+        </div>
+        {% elif vm.status == 'running' %}
+        <span class="text-warning small font-monospace"><i class="bi bi-exclamation-triangle"></i> No Agent</span>
+        {% else %}
+        <span class="text-muted small font-monospace">N/A</span>
+        {% endif %}
+    </td>
+    <td>
+        {% if vm.status == 'running' %}
+        <div class="d-flex align-items-center justify-content-between">
+            <span class="font-monospace small text-secondary me-2">{{ "%.1f"|format(vm.cpu * 100) }}%</span>
+        </div>
+        <div class="util-progress">
+            {% set cpu_pct = vm.cpu * 100 %}
+            <div class="util-progress-bar {% if cpu_pct > 80 %}rose{% elif cpu_pct > 50 %}amber{% else %}emerald{% endif %}" 
+                 style="width: {{ cpu_pct }}%"></div>
+        </div>
+        {% else %}
+        <span class="text-muted small">-</span>
+        {% endif %}
+    </td>
+    <td>
+        {% if vm.status == 'running' %}
+        {% set mem_pct = (vm.mem / vm.maxmem) * 100 if vm.maxmem > 0 else 0 %}
+        <div class="d-flex align-items-center justify-content-between">
+            <span class="font-monospace small text-secondary me-2">{{ "%.1f"|format(mem_pct) }}%</span>
+        </div>
+        <div class="util-progress">
+            <div class="util-progress-bar {% if mem_pct > 80 %}rose{% elif mem_pct > 50 %}amber{% else %}emerald{% endif %}" 
+                 style="width: {{ mem_pct }}%"></div>
+        </div>
+        {% else %}
+        <span class="text-muted small">-</span>
+        {% endif %}
+    </td>
+    <td>
+        {% if vm.tags %}
+            {% for tag in vm.tags %}
+            <span class="tag-pill">{{ tag }}</span>
+            {% endfor %}
+        {% else %}
+            <span class="text-muted small font-italic">-</span>
+        {% endif %}
+    </td>
+</tr>
+{% endfor %}
