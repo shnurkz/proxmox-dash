@@ -38,6 +38,42 @@
             box-sizing: border-box;
         }
 
+        /* Elegant Title Header Row */
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-top: 2rem;
+            border-bottom: 1px solid var(--panel-border);
+            padding-bottom: 1.25rem;
+        }
+        .header-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin: 0;
+            color: var(--text-main);
+        }
+        .header-subtitle {
+            color: var(--accent-blue);
+            font-weight: 400;
+            font-size: 1.25rem;
+            margin-left: 0.5rem;
+        }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: rgba(15, 23, 42, 0.4);
+            padding: 0.5rem 1.1rem;
+            border-radius: 30px;
+            border: 1px solid var(--panel-border);
+        }
+
         /* Glassmorphism Panel Base */
         .glass-panel {
             background: var(--panel-bg);
@@ -51,7 +87,7 @@
             box-sizing: border-box;
         }
 
-        /* PURE CSS GRID FOR METRIC CARDS (Forces perfect horizontal row alignment) */
+        /* PURE CSS GRID FOR METRIC CARDS */
         .cards-grid-layout {
             display: grid !important;
             grid-template-columns: repeat(4, 1fr) !important;
@@ -88,7 +124,7 @@
             letter-spacing: 0.06em;
         }
 
-        /* PURE FLEXBOX FOR FILTERS ROW (Forces inline horizontal layout) */
+        /* PURE FLEXBOX FOR FILTERS ROW */
         .filters-flex-layout {
             display: flex !important;
             flex-direction: row !important;
@@ -100,6 +136,16 @@
         }
         .filter-item-search { flex: 2 1 350px !important; max-width: 500px !important; }
         .filter-item-select { flex: 1 1 200px !important; max-width: 250px !important; }
+        .filter-item-btn {
+            flex: 0 1 auto !important;
+            margin-left: auto !important; /* Push the Refresh button to the far right */
+        }
+
+        /* Standardize input heights across controls */
+        .search-control, .filters-flex-layout .btn-premium {
+            height: 44px !important;
+            box-sizing: border-box !important;
+        }
 
         .search-control {
             background: rgba(15, 23, 42, 0.6) !important;
@@ -205,6 +251,9 @@
             padding: 0.6rem 1.3rem;
             box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
             transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .btn-premium:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45); background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); }
 
@@ -228,33 +277,16 @@
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg py-3 mb-4" style="background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(12px); border-bottom: 1px solid var(--panel-border);">
-        <div class="container-fluid px-4">
-            <a class="navbar-brand d-flex align-items-center gap-2 text-white fw-bold" href="#">
-                <span class="d-flex align-items-center justify-content-center bg-dark rounded-circle" style="width: 24px; height: 24px;">
-                    <span class="pulse-dot"></span>
-                </span>
-                <span class="fs-4 tracking-tight">Proxmox VE <span class="text-info fs-5 fw-normal">Real-Time Monitor</span></span>
-            </a>
-            
-            <div class="d-flex align-items-center gap-3">
-                <div id="api-status" class="text-muted small d-flex align-items-center gap-2 fw-semibold">
-                    <span class="d-inline-block rounded-circle bg-success shadow-sm" style="width: 8px; height: 8px; box-shadow: 0 0 8px var(--accent-emerald);"></span>
-                    PVE API Connected
-                </div>
-                <button id="refresh-btn" 
-                        hx-get="{{ url_for('api_vms') }}" 
-                        hx-target="#vm-table-body" 
-                        hx-indicator="#loading"
-                        class="btn btn-premium d-flex align-items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-                    Refresh
-                </button>
+    <div class="main-wrapper">
+
+        <!-- Elegant Title and Status Indicator Header Row -->
+        <div class="header-row">
+            <h1 class="header-title">Proxmox VE <span class="header-subtitle">Real-Time Monitor</span></h1>
+            <div id="api-status" class="status-indicator">
+                <span class="pulse-dot"></span>
+                <span>PVE API Connected</span>
             </div>
         </div>
-    </nav>
-
-    <div class="main-wrapper">
 
         <div class="cards-grid-layout" id="stats-panel">
             <div class="glass-panel stat-card blue">
@@ -301,6 +333,17 @@
                         <div id="tags-checkboxes-list"></div>
                     </div>
                 </div>
+            </div>
+            <!-- Moved Refresh Button with fixed relative HTMX endpoint route -->
+            <div class="filter-item-btn">
+                <button id="refresh-btn" 
+                        hx-get="api/vms" 
+                        hx-target="#vm-table-body" 
+                        hx-indicator="#loading"
+                        class="btn btn-premium gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                    Refresh
+                </button>
             </div>
         </div>
 

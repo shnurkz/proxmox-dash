@@ -155,18 +155,24 @@ async def fetch_proxmox_data(client: httpx.AsyncClient) -> Tuple[List[Dict[str, 
                 "tags": tags
             })
             
-    # Resolve IP addresses concurrently for all running VMs
+    # Resolve IP addresses concurrently for all running VMs, limited to 40 at a time to prevent API overload
+    sem = asyncio.Semaphore(40)
+    
+    async def fetch_vm_ip_throttled(vm_item):
+        async with sem:
+            return await fetch_vm_ip(client, vm_item["node"], vm_item["vmid"])
+
     tasks = []
     running_vms = []
     for vm in vms:
         if vm["status"] == "running":
             running_vms.append(vm)
-            tasks.append(fetch_vm_ip(client, vm["node"], vm["vmid"]))
+            tasks.append(fetch_vm_ip_throttled(vm))
         else:
             vm["ip"] = "N/A"
             
     if tasks:
-        logger.info(f"Querying QEMU agent networks for {len(tasks)} running VMs concurrently.")
+        logger.info(f"Querying QEMU agent networks for {len(tasks)} running VMs (max 40 concurrent).")
         ips = await asyncio.gather(*tasks)
         for vm, ip in zip(running_vms, ips):
             vm["ip"] = ip
