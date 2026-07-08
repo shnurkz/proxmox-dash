@@ -26,24 +26,45 @@
     </td>
     <td>
         {% if vm.status == 'running' %}
-        <div class="d-flex align-items-center gap-2">
-            <div class="progress w-100 bg-dark" style="height: 6px;">
-                <div class="progress-bar bg-info" style="width: {{ (vm.cpu * 100)|round|int }}%"></div>
-            </div>
-            <span class="small font-monospace text-secondary" style="min-width: 35px;">{{ (vm.cpu * 100)|round(1) }}%</span>
+        <div class="d-flex align-items-center justify-content-between">
+            <span class="font-monospace small text-secondary me-2">{{ "%.1f"|format(vm.cpu * 100) }}%</span>
+        </div>
+        <div class="util-progress">
+            {% set cpu_pct = vm.cpu * 100 %}
+            {% if cpu_pct > 80 %}
+                {% set cpu_color = "rose" %}
+            {% elif cpu_pct > 50 %}
+                {% set cpu_color = "amber" %}
+            {% else %}
+                {% set cpu_color = "emerald" %}
+            {% endif %}
+            <div class="util-progress-bar {{ cpu_color }}" style="width: {{ cpu_pct }}%"></div>
         </div>
         {% else %}
         <span class="text-muted small">-</span>
         {% endif %}
     </td>
+
     <td>
-        {% if vm.status == 'running' and vm.maxmem > 0 %}
-        <div class="d-flex align-items-center gap-2">
-            <div class="progress w-100 bg-dark" style="height: 6px;">
-                <div class="progress-bar bg-warning" style="width: {{ (vm.mem / vm.maxmem * 100)|round|int }}%"></div>
+        {% if vm.status == 'running' %}
+            {% if vm.maxmem > 0 %}
+                {% set mem_pct = (vm.mem / vm.maxmem) * 100 %}
+            {% else %}
+                {% set mem_pct = 0 %}
+            {% endif %}
+            <div class="d-flex align-items-center justify-content-between">
+                <span class="font-monospace small text-secondary me-2">{{ "%.1f"|format(mem_pct) }}%</span>
             </div>
-            <span class="small font-monospace text-secondary" style="min-width: 35px;">{{ (vm.mem / vm.maxmem * 100)|round(1) }}%</span>
-        </div>
+            <div class="util-progress">
+                {% if mem_pct > 80 %}
+                    {% set mem_color = "rose" %}
+                {% elif mem_pct > 50 %}
+                    {% set mem_color = "amber" %}
+                {% else %}
+                    {% set mem_color = "emerald" %}
+                {% endif %}
+                <div class="util-progress-bar {{ mem_color }}" style="width: {{ mem_pct }}%"></div>
+            </div>
         {% else %}
         <span class="text-muted small">-</span>
         {% endif %}
